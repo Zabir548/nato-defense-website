@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NATO Defense Expenditure Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #05080f;
+    --surface: #0b1120;
+    --card: #0f1929;
+    --border: #1a2d4a;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --green: #00ff9d;
+    --text: #c8d8f0;
+    --muted: #4a6080;
+    --gold: #ffc107;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(0,100,180,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(0,229,255,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* Header */
+  header {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .nato-emblem {
+    width: 56px;
+    height: 56px;
+    position: relative;
+  }
+
+  .nato-emblem svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .header-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 4vw, 48px);
+    letter-spacing: 3px;
+    line-height: 1;
+    color: #fff;
+  }
+
+  .header-subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .header-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,255,157,0.08);
+    border: 1px solid rgba(0,255,157,0.2);
+    padding: 4px 12px;
+    border-radius: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 2px;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .year-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .year-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .year-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .year-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: bold;
+  }
+
+  /* Summary stats */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 28px 0;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.5s both;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+
+  .stat-card:nth-child(1)::before { background: var(--accent); }
+  .stat-card:nth-child(2)::before { background: var(--green); }
+  .stat-card:nth-child(3)::before { background: var(--accent2); }
+  .stat-card:nth-child(4)::before { background: var(--gold); }
+
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  .stat-card:nth-child(1) .stat-value { color: var(--accent); }
+  .stat-card:nth-child(2) .stat-value { color: var(--green); }
+  .stat-card:nth-child(3) .stat-value { color: var(--accent2); }
+  .stat-card:nth-child(4) .stat-value { color: var(--gold); }
+
+  .stat-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Main layout */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 1000px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Table panel */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,229,255,0.03);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .panel-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #fff;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    min-width: 200px;
+  }
+
+  .search-box input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    width: 100%;
+    letter-spacing: 1px;
+  }
+
+  .search-box input::placeholder { color: var(--muted); }
+
+  .sort-controls {
+    display: flex;
+    gap: 6px;
+  }
+
+  .sort-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .sort-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.08); }
+  .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  thead th:hover { color: var(--accent); }
+
+  thead th .sort-icon { margin-left: 4px; opacity: 0.4; }
+  thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(26,45,74,0.5);
+    transition: background 0.2s;
+    animation: fadeUp 0.4s both;
+  }
+
+  tbody tr:hover { background: rgba(0,229,255,0.04); }
+
+  td {
+    padding: 12px 16px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .rank-cell {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    width: 40px;
+  }
+
+  .country-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 160px;
+  }
+
+  .flag {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .country-name {
+    font-weight: 600;
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .bar-cell { min-width: 120px; }
+
+  .bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .val-cell {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    text-align: right;
+  }
+
+  .gdp-cell {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .gdp-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 11px;
+  }
+
+  .gdp-meet { background: rgba(0,255,157,0.1); color: var(--green); border: 1px solid rgba(0,255,157,0.2); }
+  .gdp-close { background: rgba(255,193,7,0.1); color: var(--gold); border: 1px solid rgba(255,193,7,0.2); }
+  .gdp-low { background: rgba(255,107,53,0.1); color: var(--accent2); border: 1px solid rgba(255,107,53,0.2); }
+
+  .pct-cell {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    text-align: right;
+  }
+
+  /* Side panel */
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .chart-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px;
+    flex: 1;
+  }
+
+  .chart-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .chart-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+
+  /* Donut chart */
+  .donut-wrap {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+  }
+
+  .donut-wrap canvas { position: absolute; inset: 0; }
+
+  .donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .donut-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .donut-lbl {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+
+  .legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  .legend-item:hover { background: rgba(255,255,255,0.04); }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-name { flex: 1; color: var(--text); font-size: 12px; }
+  .legend-pct {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* GDP compliance */
+  .compliance-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+
+  .compliance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .compliance-stat {
+    text-align: center;
+    padding: 12px 8px;
+    border: 1px solid var(--border);
+  }
+
+  .compliance-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    line-height: 1;
+  }
+
+  .compliance-stat:nth-child(1) .compliance-num { color: var(--green); }
+  .compliance-stat:nth-child(2) .compliance-num { color: var(--gold); }
+  .compliance-stat:nth-child(3) .compliance-num { color: var(--accent2); }
+
+  .compliance-lbl {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Detail tooltip / hover card */
+  .tooltip {
+    position: fixed;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    padding: 14px 18px;
+    pointer-events: none;
+    z-index: 1000;
+    min-width: 220px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: 0 0 30px rgba(0,229,255,0.2);
+  }
+
+  .tooltip.visible { opacity: 1; }
+
+  .tooltip-country {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+
+  .tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+
+  .tooltip-key {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .tooltip-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 0;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .footer-note {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 40px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  /* Scanline effect on header */
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="scanlines"></div>
+    <div class="header-inner">
+      <div class="logo-area">
+        <div class="nato-emblem">
+          <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="28" cy="28" r="26" stroke="#00e5ff" stroke-width="1.5"/>
+            <circle cx="28" cy="28" r="18" stroke="#00e5ff" stroke-width="1"/>
+            <line x1="28" y1="2" x2="28" y2="54" stroke="#00e5ff" stroke-width="1"/>
+            <line x1="2" y1="28" x2="54" y2="28" stroke="#00e5ff" stroke-width="1"/>
+            <line x1="10" y1="10" x2="46" y2="46" stroke="#00e5ff" stroke-width="0.7" opacity="0.6"/>
+            <line x1="46" y1="10" x2="10" y2="46" stroke="#00e5ff" stroke-width="0.7" opacity="0.6"/>
+            <circle cx="28" cy="28" r="4" fill="#00e5ff" opacity="0.8"/>
+            <circle cx="28" cy="28" r="2" fill="#00e5ff"/>
+          </svg>
+        </div>
+        <div>
+          <div class="header-title">NATO Defense Expenditure</div>
+          <div class="header-subtitle">Allied Command Operations · Financial Intelligence</div>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div class="live-badge"><span class="live-dot"></span>CLASSIFIED: UNCLASSIFIED</div>
+        <div class="year-selector" id="yearSelector"></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="main-grid">
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Allied Nations · Expenditure Matrix</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <div class="search-box">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted)">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input type="text" id="searchInput" placeholder="SEARCH NATIONS...">
+            </div>
+            <div class="sort-controls">
+              <button class="sort-btn active" onclick="setSort('spending')">SPEND</button>
+              <button class="sort-btn" onclick="setSort('gdp')">GDP%</button>
+              <button class="sort-btn" onclick="setSort('name')">NAME</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>NATION</th>
+                <th>EXPENDITURE (USD)</th>
+                <th>SHARE</th>
+                <th>% OF GDP</th>
+                <th>GDP TARGET</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+          <div class="no-results" id="noResults" style="display:none">NO MATCHING NATIONS FOUND</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <div class="chart-panel">
+        <div class="chart-title">Expenditure Share</div>
+        <div class="chart-sub">TOP 8 · % OF NATO TOTAL</div>
+        <div class="donut-wrap">
+          <canvas id="donutCanvas" width="200" height="200"></canvas>
+          <div class="donut-center">
+            <div class="donut-val" id="donutCenter">—</div>
+            <div class="donut-lbl">TOTAL USD</div>
+          </div>
+        </div>
+        <div class="legend" id="donutLegend"></div>
+      </div>
+
+      <div class="compliance-panel">
+        <div class="chart-title">GDP Target Compliance</div>
+        <div class="chart-sub">2% OF GDP NATO BENCHMARK</div>
+        <div class="compliance-grid" id="complianceGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-note">DATA SOURCE: NATO DEFENSE EXPENDITURE REPORTS · FIGURES IN USD BILLIONS</div>
+    <div class="footer-note">© NATO FINANCIAL INTELLIGENCE · ALLIED COMMAND</div>
+  </footer>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-country" id="ttCountry"></div>
+  <div class="tooltip-row"><span class="tooltip-key">EXPENDITURE</span><span class="tooltip-val" id="ttSpend"></span></div>
+  <div class="tooltip-row"><span class="tooltip-key">% OF GDP</span><span class="tooltip-val" id="ttGdp"></span></div>
+  <div class="tooltip-row"><span class="tooltip-key">PER CAPITA</span><span class="tooltip-val" id="ttCap"></span></div>
+  <div class="tooltip-row"><span class="tooltip-key">NATO SHARE</span><span class="tooltip-val" id="ttShare"></span></div>
+  <div class="tooltip-row"><span class="tooltip-key">YoY CHANGE</span><span class="tooltip-val" id="ttYoy"></span></div>
+</div>
+
+<script>
+// NATO Defense Expenditure Data (USD Billions)
+const NATO_DATA = {
+  2019: [
+    { name: "United States", flag: "🇺🇸", spending: 730.0, gdpPct: 3.42, perCapita: 2218, pop: 329, yoy: +4.5 },
+    { name: "United Kingdom", flag: "🇬🇧", spending: 60.3, gdpPct: 2.14, perCapita: 893, pop: 67.5, yoy: +2.1 },
+    { name: "Germany", flag: "🇩🇪", spending: 49.3, gdpPct: 1.38, perCapita: 592, pop: 83.2, yoy: +9.7 },
+    { name: "France", flag: "🇫🇷", spending: 50.1, gdpPct: 1.84, perCapita: 743, pop: 67.4, yoy: +4.6 },
+    { name: "Italy", flag: "🇮🇹", spending: 26.8, gdpPct: 1.22, perCapita: 443, pop: 60.4, yoy: +1.5 },
+    { name: "Canada", flag: "🇨🇦", spending: 22.2, gdpPct: 1.31, perCapita: 584, pop: 38.0, yoy: +5.4 },
+    { name: "Spain", flag: "🇪🇸", spending: 12.1, gdpPct: 0.92, perCapita: 257, pop: 47.0, yoy: +3.8 },
+    { name: "Turkey", flag: "🇹🇷", spending: 20.4, gdpPct: 1.89, perCapita: 241, pop: 84.7, yoy: +5.2 },
+    { name: "Poland", flag: "🇵🇱", spending: 11.8, gdpPct: 2.01, perCapita: 311, pop: 38.0, yoy: +8.5 },
+    { name: "Netherlands", flag: "🇳🇱", spending: 12.1, gdpPct: 1.35, perCapita: 700, pop: 17.3, yoy: +8.2 },
+    { name: "Greece", flag: "🇬🇷", spending: 5.1, gdpPct: 2.28, perCapita: 476, pop: 10.7, yoy: +1.2 },
+    { name: "Norway", flag: "🇳🇴", spending: 7.2, gdpPct: 1.80, perCapita: 1333, pop: 5.4, yoy: +3.1 },
+    { name: "Belgium", flag: "🇧🇪", spending: 5.0, gdpPct: 0.93, perCapita: 435, pop: 11.5, yoy: +4.5 },
+    { name: "Denmark", flag: "🇩🇰", spending: 4.7, gdpPct: 1.32, perCapita: 809, pop: 5.8, yoy: +3.2 },
+    { name: "Romania", flag: "🇷🇴", spending: 4.6, gdpPct: 2.04, perCapita: 240, pop: 19.2, yoy: +13.9 },
+    { name: "Portugal", flag: "🇵🇹", spending: 2.8, gdpPct: 1.37, perCapita: 272, pop: 10.3, yoy: +6.0 },
+    { name: "Czechia", flag: "🇨🇿", spending: 2.7, gdpPct: 1.19, perCapita: 253, pop: 10.7, yoy: +8.4 },
+    { name: "Hungary", flag: "🇭🇺", spending: 2.0, gdpPct: 1.23, perCapita: 204, pop: 9.8, yoy: +9.4 },
+    { name: "Slovakia", flag: "🇸🇰", spending: 1.4, gdpPct: 1.74, perCapita: 257, pop: 5.5, yoy: +4.0 },
+    { name: "Bulgaria", flag: "🇧🇬", spending: 1.4, gdpPct: 3.25, perCapita: 196, pop: 7.1, yoy: +127 },
+    { name: "Croatia", flag: "🇭🇷", spending: 0.9, gdpPct: 1.68, perCapita: 220, pop: 4.1, yoy: +3.6 },
+    { name: "Albania", flag: "🇦🇱", spending: 0.2, gdpPct: 1.26, perCapita: 71, pop: 2.8, yoy: +8.4 },
+    { name: "Lithuania", flag: "🇱🇹", spending: 1.1, gdpPct: 2.03, perCapita: 394, pop: 2.8, yoy: +8.5 },
+    { name: "Latvia", flag: "🇱🇻", spending: 0.7, gdpPct: 2.01, perCapita: 366, pop: 1.9, yoy: +5.1 },
+    { name: "Estonia", flag: "🇪🇪", spending: 0.7, gdpPct: 2.14, perCapita: 529, pop: 1.3, yoy: +5.5 },
+    { name: "Luxembourg", flag: "🇱🇺", spending: 0.4, gdpPct: 0.56, perCapita: 617, pop: 0.65, yoy: +18.2 },
+    { name: "Montenegro", flag: "🇲🇪", spending: 0.1, gdpPct: 1.66, perCapita: 160, pop: 0.62, yoy: +5.0 },
+    { name: "North Macedonia", flag: "🇲🇰", spending: 0.1, gdpPct: 1.06, perCapita: 57, pop: 1.75, yoy: +3.7 },
+    { name: "Iceland", flag: "🇮🇸", spending: 0.06, gdpPct: 0.28, perCapita: 163, pop: 0.37, yoy: +6.8 },
+  ],
+  2020: [
+    { name: "United States", flag: "🇺🇸", spending: 738.0, gdpPct: 3.73, perCapita: 2231, pop: 331, yoy: +1.1 },
+    { name: "United Kingdom", flag: "🇬🇧", spending: 61.5, gdpPct: 2.33, perCapita: 908, pop: 67.8, yoy: +2.0 },
+    { name: "Germany", flag: "🇩🇪", spending: 52.8, gdpPct: 1.57, perCapita: 634, pop: 83.3, yoy: +7.1 },
+    { name: "France", flag: "🇫🇷", spending: 52.7, gdpPct: 2.10, perCapita: 780, pop: 67.6, yoy: +5.2 },
+    { name: "Italy", flag: "🇮🇹", spending: 28.9, gdpPct: 1.57, perCapita: 479, pop: 60.3, yoy: +7.8 },
+    { name: "Canada", flag: "🇨🇦", spending: 22.8, gdpPct: 1.39, perCapita: 599, pop: 38.1, yoy: +2.7 },
+    { name: "Spain", flag: "🇪🇸", spending: 14.4, gdpPct: 1.17, perCapita: 305, pop: 47.2, yoy: +19.0 },
+    { name: "Turkey", flag: "🇹🇷", spending: 17.5, gdpPct: 1.88, perCapita: 205, pop: 85.4, yoy: -14.2 },
+    { name: "Poland", flag: "🇵🇱", spending: 13.0, gdpPct: 2.31, perCapita: 343, pop: 37.9, yoy: +10.2 },
+    { name: "Netherlands", flag: "🇳🇱", spending: 12.9, gdpPct: 1.45, perCapita: 746, pop: 17.4, yoy: +6.6 },
+    { name: "Greece", flag: "🇬🇷", spending: 6.0, gdpPct: 2.68, perCapita: 561, pop: 10.7, yoy: +17.6 },
+    { name: "Norway", flag: "🇳🇴", spending: 7.5, gdpPct: 1.99, perCapita: 1389, pop: 5.4, yoy: +4.2 },
+    { name: "Belgium", flag: "🇧🇪", spending: 5.5, gdpPct: 1.07, perCapita: 474, pop: 11.6, yoy: +10.0 },
+    { name: "Denmark", flag: "🇩🇰", spending: 5.0, gdpPct: 1.37, perCapita: 858, pop: 5.83, yoy: +6.4 },
+    { name: "Romania", flag: "🇷🇴", spending: 5.3, gdpPct: 2.30, perCapita: 275, pop: 19.1, yoy: +15.2 },
+    { name: "Portugal", flag: "🇵🇹", spending: 3.1, gdpPct: 1.54, perCapita: 301, pop: 10.3, yoy: +10.7 },
+    { name: "Czechia", flag: "🇨🇿", spending: 3.0, gdpPct: 1.33, perCapita: 281, pop: 10.7, yoy: +11.1 },
+    { name: "Hungary", flag: "🇭🇺", spending: 2.3, gdpPct: 1.83, perCapita: 235, pop: 9.8, yoy: +15.0 },
+    { name: "Slovakia", flag: "🇸🇰", spending: 1.5, gdpPct: 1.92, perCapita: 275, pop: 5.46, yoy: +7.1 },
+    { name: "Bulgaria", flag: "🇧🇬", spending: 1.5, gdpPct: 3.39, perCapita: 211, pop: 7.1, yoy: +7.1 },
+    { name: "Croatia", flag: "🇭🇷", spending: 0.9, gdpPct: 1.79, perCapita: 220, pop: 4.05, yoy: 0 },
+    { name: "Albania", flag: "🇦🇱", spending: 0.2, gdpPct: 1.33, perCapita: 71, pop: 2.81, yoy: 0 },
+    { name: "Lithuania", flag: "🇱🇹", spending: 1.2, gdpPct: 2.29, perCapita: 429, pop: 2.80, yoy: +9.1 },
+    { name: "Latvia", flag: "🇱🇻", spending: 0.7, gdpPct: 2.16, perCapita: 368, pop: 1.9, yoy: 0 },
+    { name: "Estonia", flag: "🇪🇪", spending: 0.7, gdpPct: 2.28, perCapita: 529, pop: 1.32, yoy: 0 },
+    { name: "Luxembourg", flag: "🇱🇺", spending: 0.4, gdpPct: 0.57, perCapita: 617, pop: 0.65, yoy: 0 },
+    { name: "Montenegro", flag: "🇲🇪", spending: 0.1, gdpPct: 1.77, perCapita: 161, pop: 0.62, yoy: 0 },
+    { name: "North Macedonia", flag: "🇲🇰", spending: 0.1, gdpPct: 1.13, perCapita: 57, pop: 1.75, yoy: 0 },
+    { name: "Iceland", flag: "🇮🇸", spending: 0.07, gdpPct: 0.30, perCapita: 189, pop: 0.37, yoy: +16.7 },
+  ],
+  2021: [
+    { name: "United States", flag: "🇺🇸", spending: 754.0, gdpPct: 3.52, perCapita: 2272, pop: 332, yoy: +2.2 },
+    { name: "United Kingdom", flag: "🇬🇧", spending: 68.4, gdpPct: 2.26, perCapita: 1007, pop: 67.9, yoy: +11.2 },
+    { name: "Germany", flag: "🇩🇪", spending: 56.1, gdpPct: 1.49, perCapita: 673, pop: 83.4, yoy: +6.3 },
+    { name: "France", flag: "🇫🇷", spending: 56.6, gdpPct: 1.99, perCapita: 838, pop: 67.7, yoy: +7.4 },
+    { name: "Italy", flag: "🇮🇹", spending: 30.4, gdpPct: 1.54, perCapita: 503, pop: 60.4, yoy: +5.2 },
+    { name: "Canada", flag: "🇨🇦", spending: 26.4, gdpPct: 1.37, perCapita: 694, pop: 38.0, yoy: +15.8 },
+    { name: "Spain", flag: "🇪🇸", spending: 15.1, gdpPct: 1.02, perCapita: 320, pop: 47.2, yoy: +4.9 },
+    { name: "Turkey", flag: "🇹🇷", spending: 19.0, gdpPct: 1.57, perCapita: 222, pop: 85.5, yoy: +8.6 },
+    { name: "Poland", flag: "🇵🇱", spending: 13.7, gdpPct: 2.21, perCapita: 362, pop: 37.9, yoy: +5.4 },
+    { name: "Netherlands", flag: "🇳🇱", spending: 13.7, gdpPct: 1.45, perCapita: 792, pop: 17.5, yoy: +6.2 },
+    { name: "Greece", flag: "🇬🇷", spending: 7.3, gdpPct: 2.76, perCapita: 682, pop: 10.7, yoy: +21.7 },
+    { name: "Norway", flag: "🇳🇴", spending: 8.0, gdpPct: 1.71, perCapita: 1481, pop: 5.4, yoy: +6.7 },
+    { name: "Belgium", flag: "🇧🇪", spending: 5.8, gdpPct: 1.08, perCapita: 500, pop: 11.6, yoy: +5.5 },
+    { name: "Denmark", flag: "🇩🇰", spending: 5.4, gdpPct: 1.35, perCapita: 929, pop: 5.83, yoy: +8.0 },
+    { name: "Romania", flag: "🇷🇴", spending: 5.8, gdpPct: 2.04, perCapita: 302, pop: 19.2, yoy: +9.4 },
+    { name: "Portugal", flag: "🇵🇹", spending: 3.2, gdpPct: 1.55, perCapita: 311, pop: 10.3, yoy: +3.2 },
+    { name: "Czechia", flag: "🇨🇿", spending: 3.4, gdpPct: 1.41, perCapita: 318, pop: 10.7, yoy: +13.3 },
+    { name: "Hungary", flag: "🇭🇺", spending: 2.5, gdpPct: 1.63, perCapita: 255, pop: 9.8, yoy: +8.7 },
+    { name: "Slovakia", flag: "🇸🇰", spending: 1.6, gdpPct: 1.73, perCapita: 293, pop: 5.46, yoy: +6.7 },
+    { name: "Bulgaria", flag: "🇧🇬", spending: 1.6, gdpPct: 1.56, perCapita: 225, pop: 7.1, yoy: +6.7 },
+    { name: "Croatia", flag: "🇭🇷", spending: 1.0, gdpPct: 1.78, perCapita: 244, pop: 4.0, yoy: +11.1 },
+    { name: "Albania", flag: "🇦🇱", spending: 0.2, gdpPct: 1.56, perCapita: 71, pop: 2.81, yoy: 0 },
+    { name: "Lithuania", flag: "🇱🇹", spending: 1.3, gdpPct: 2.04, perCapita: 464, pop: 2.80, yoy: +8.3 },
+    { name: "Latvia", flag: "🇱🇻", spending: 0.8, gdpPct: 2.18, perCapita: 421, pop: 1.9, yoy: +14.3 },
+    { name: "Estonia", flag: "🇪🇪", spending: 0.8, gdpPct: 2.17, perCapita: 615, pop: 1.3, yoy: +14.3 },
+    { name: "Luxembourg", flag: "🇱🇺", spending: 0.4, gdpPct: 0.54, perCapita: 617, pop: 0.65, yoy: 0 },
+    { name: "Montenegro", flag: "🇲🇪", spending: 0.1, gdpPct: 1.59, perCapita: 161, pop: 0.62, yoy: 0 },
+    { name: "North Macedonia", flag: "🇲🇰", spending: 0.2, gdpPct: 1.50, perCapita: 114, pop: 1.75, yoy: +100 },
+    { name: "Iceland", flag: "🇮🇸", spending: 0.07, gdpPct: 0.27, perCapita: 189, pop: 0.37, yoy: 0 },
+  ],
+  2022: [
+    { name: "United States", flag: "🇺🇸", spending: 811.0, gdpPct: 3.46, perCapita: 2434, pop: 333, yoy: +7.6 },
+    { name: "United Kingdom", flag: "🇬🇧", spending: 72.8, gdpPct: 2.14, perCapita: 1070, pop: 68.0, yoy: +6.4 },
+    { name: "Germany", flag: "🇩🇪", spending: 55.8, gdpPct: 1.44, perCapita: 669, pop: 83.5, yoy: -0.5 },
+    { name: "France", flag: "🇫🇷", spending: 57.7, gdpPct: 1.91, perCapita: 852, pop: 67.8, yoy: +1.9 },
+    { name: "Italy", flag: "🇮🇹", spending: 33.5, gdpPct: 1.51, perCapita: 555, pop: 60.3, yoy: +10.2 },
+    { name: "Canada", flag: "🇨🇦", spending: 26.9, gdpPct: 1.27, perCapita: 708, pop: 38.0, yoy: +1.9 },
+    { name: "Spain", flag: "🇪🇸", spending: 16.4, gdpPct: 1.05, perCapita: 347, pop: 47.3, yoy: +8.6 },
+    { name: "Turkey", flag: "🇹🇷", spending: 10.6, gdpPct: 1.00, perCapita: 123, pop: 86.2, yoy: -44.2 },
+    { name: "Poland", flag: "🇵🇱", spending: 16.6, gdpPct: 2.42, perCapita: 438, pop: 37.9, yoy: +21.2 },
+    { name: "Netherlands", flag: "🇳🇱", spending: 16.5, gdpPct: 1.60, perCapita: 952, pop: 17.6, yoy: +20.4 },
+    { name: "Greece", flag: "🇬🇷", spending: 8.0, gdpPct: 2.74, perCapita: 748, pop: 10.7, yoy: +9.6 },
+    { name: "Norway", flag: "🇳🇴", spending: 9.1, gdpPct: 1.53, perCapita: 1685, pop: 5.4, yoy: +13.8 },
+    { name: "Belgium", flag: "🇧🇪", spending: 6.1, gdpPct: 1.05, perCapita: 526, pop: 11.6, yoy: +5.2 },
+    { name: "Denmark", flag: "🇩🇰", spending: 5.9, gdpPct: 1.35, perCapita: 1017, pop: 5.84, yoy: +9.3 },
+    { name: "Romania", flag: "🇷🇴", spending: 6.2, gdpPct: 1.68, perCapita: 323, pop: 19.2, yoy: +6.9 },
+    { name: "Portugal", flag: "🇵🇹", spending: 3.6, gdpPct: 1.48, perCapita: 350, pop: 10.3, yoy: +12.5 },
+    { name: "Czechia", flag: "🇨🇿", spending: 3.7, gdpPct: 1.36, perCapita: 346, pop: 10.7, yoy: +8.8 },
+    { name: "Hungary", flag: "🇭🇺", spending: 2.8, gdpPct: 1.80, perCapita: 286, pop: 9.8, yoy: +12.0 },
+    { name: "Slovakia", flag: "🇸🇰", spending: 1.8, gdpPct: 1.82, perCapita: 330, pop: 5.46, yoy: +12.5 },
+    { name: "Bulgaria", flag: "🇧🇬", spending: 1.7, gdpPct: 1.59, perCapita: 239, pop: 7.1, yoy: +6.3 },
+    { name: "Croatia", flag: "🇭🇷", spending: 1.3, gdpPct: 1.81, perCapita: 317, pop: 4.1, yoy: +30.0 },
+    { name: "Albania", flag: "🇦🇱", spending: 0.3, gdpPct: 1.98, perCapita: 107, pop: 2.81, yoy: +50.0 },
+    { name: "Lithuania", flag: "🇱🇹", spending: 1.6, gdpPct: 2.52, perCapita: 571, pop: 2.80, yoy: +23.1 },
+    { name: "Latvia", flag: "🇱🇻", spending: 0.9, gdpPct: 2.23, perCapita: 474, pop: 1.9, yoy: +12.5 },
+    { name: "Estonia", flag: "🇪🇪", spending: 0.9, gdpPct: 2.28, perCapita: 692, pop: 1.3, yoy: +12.5 },
+    { name: "Luxembourg", flag: "🇱🇺", spending: 0.5, gdpPct: 0.61, perCapita: 769, pop: 0.65, yoy: +25.0 },
+    { name: "Montenegro", flag: "🇲🇪", spending: 0.1, gdpPct: 1.52, perCapita: 161, pop: 0.62, yoy: 0 },
+    { name: "North Macedonia", flag: "🇲🇰", spending: 0.2, gdpPct: 1.61, perCapita: 114, pop: 1.75, yoy: 0 },
+    { name: "Iceland", flag: "🇮🇸", spending: 0.08, gdpPct: 0.27, perCapita: 216, pop: 0.37, yoy: +14.3 },
+    { name: "Finland", flag: "🇫🇮", spending: 4.8, gdpPct: 1.86, perCapita: 866, pop: 5.54, yoy: 0 },
+  ],
+  2023: [
+    { name: "United States", flag: "🇺🇸", spending: 858.0, gdpPct: 3.49, perCapita: 2571, pop: 334, yoy: +5.8 },
+    { name: "United Kingdom", flag: "🇬🇧", spending: 73.5, gdpPct: 2.07, perCapita: 1081, pop: 68.0, yoy: +1.0 },
+    { name: "Germany", flag: "🇩🇪", spending: 66.8, gdpPct: 1.57, perCapita: 800, pop: 84.0, yoy: +19.7 },
+    { name: "France", flag: "🇫🇷", spending: 61.1, gdpPct: 1.93, perCapita: 898, pop: 68.0, yoy: +5.9 },
+    { name: "Italy", flag: "🇮🇹", spending: 35.5, gdpPct: 1.46, perCapita: 588, pop: 60.4, yoy: +5.9 },
+    { name: "Canada", flag: "🇨🇦", spending: 29.7, gdpPct: 1.38, perCapita: 781, pop: 38.0, yoy: +10.4 },
+    { name: "Spain", flag: "🇪🇸", spending: 18.8, gdpPct: 1.26, perCapita: 397, pop: 47.4, yoy: +14.6 },
+    { name: "Turkey", flag: "🇹🇷", spending: 18.2, gdpPct: 1.28, perCapita: 211, pop: 86.0, yoy: +71.7 },
+    { name: "Poland", flag: "🇵🇱", spending: 31.6, gdpPct: 3.90, perCapita: 834, pop: 37.9, yoy: +90.4 },
+    { name: "Netherlands", flag: "🇳🇱", spending: 19.4, gdpPct: 1.72, perCapita: 1118, pop: 17.6, yoy: +17.6 },
+    { name: "Greece", flag: "🇬🇷", spending: 8.9, gdpPct: 2.59, perCapita: 831, pop: 10.7, yoy: +11.3 },
+    { name: "Norway", flag: "🇳🇴", spending: 10.1, gdpPct: 1.67, perCapita: 1870, pop: 5.4, yoy: +11.0 },
+    { name: "Belgium", flag: "🇧🇪", spending: 6.5, gdpPct: 1.09, perCapita: 561, pop: 11.6, yoy: +6.6 },
+    { name: "Denmark", flag: "🇩🇰", spending: 8.2, gdpPct: 1.74, perCapita: 1403, pop: 5.85, yoy: +39.0 },
+    { name: "Romania", flag: "🇷🇴", spending: 8.5, gdpPct: 1.65, perCapita: 443, pop: 19.2, yoy: +37.1 },
+    { name: "Portugal", flag: "🇵🇹", spending: 4.7, gdpPct: 1.55, perCapita: 456, pop: 10.3, yoy: +30.6 },
+    { name: "Czechia", flag: "🇨🇿", spending: 4.0, gdpPct: 1.47, perCapita: 374, pop: 10.7, yoy: +8.1 },
+    { name: "Hungary", flag: "🇭🇺", spending: 3.7, gdpPct: 2.43, perCapita: 378, pop: 9.8, yoy: +32.1 },
+    { name: "Slovakia", flag: "🇸🇰", spending: 2.2, gdpPct: 2.03, perCapita: 403, pop: 5.46, yoy: +22.2 },
+    { name: "Bulgaria", flag: "🇧🇬", spending: 2.2, gdpPct: 1.75, perCapita: 310, pop: 7.1, yoy: +29.4 },
+    { name: "Croatia", flag: "🇭🇷", spending: 1.4, gdpPct: 1.81, perCapita: 341, pop: 4.1, yoy: +7.7 },
+    { name: "Albania", flag: "🇦🇱", spending: 0.4, gdpPct: 2.05, perCapita: 143, pop: 2.81, yoy: +33.3 },
+    { name: "Lithuania", flag: "🇱🇹", spending: 1.9, gdpPct: 2.54, perCapita: 679, pop: 2.80, yoy: +18.8 },
+    { name: "Latvia", flag: "🇱🇻", spending: 1.1, gdpPct: 2.27, perCapita: 579, pop: 1.9, yoy: +22.2 },
+    { name: "Estonia", flag: "🇪🇪", spending: 1.1, gdpPct: 2.73, perCapita: 846, pop: 1.3, yoy: +22.2 },
+    { name: "Luxembourg", flag: "🇱🇺", spending: 0.6, gdpPct: 0.67, perCapita: 923, pop: 0.65, yoy: +20.0 },
+    { name: "Montenegro", flag: "🇲🇪", spending: 0.1, gdpPct: 1.87, perCapita: 161, pop: 0.62, yoy: 0 },
+    { name: "North Macedonia", flag: "🇲🇰", spending: 0.2, gdpPct: 1.70, perCapita: 114, pop: 1.75, yoy: 0 },
+    { name: "Iceland", flag: "🇮🇸", spending: 0.1, gdpPct: 0.30, perCapita: 270, pop: 0.37, yoy: +25.0 },
+    { name: "Finland", flag: "🇫🇮", spending: 7.0, gdpPct: 2.45, perCapita: 1264, pop: 5.54, yoy: +45.8 },
+    { name: "Sweden", flag: "🇸🇪", spending: 10.2, gdpPct: 1.73, perCapita: 961, pop: 10.6, yoy: 0 },
+  ],
+  2024: [
+    { name: "United States", flag: "🇺🇸", spending: 895.2, gdpPct: 3.38, perCapita: 2677, pop: 334, yoy: +4.3 },
+    { name: "United Kingdom", flag: "🇬🇧", spending: 81.2, gdpPct: 2.32, perCapita: 1195, pop: 68.0, yoy: +10.5 },
+    { name: "Germany", flag: "🇩🇪", spending: 97.0, gdpPct: 2.12, perCapita: 1154, pop: 84.1, yoy: +45.2 },
+    { name: "France", flag: "🇫🇷", spending: 67.8, gdpPct: 2.06, perCapita: 997, pop: 68.0, yoy: +10.9 },
+    { name: "Italy", flag: "🇮🇹", spending: 40.0, gdpPct: 1.61, perCapita: 663, pop: 60.3, yoy: +12.7 },
+    { name: "Canada", flag: "🇨🇦", spending: 33.8, gdpPct: 1.37, perCapita: 889, pop: 38.0, yoy: +13.8 },
+    { name: "Spain", flag: "🇪🇸", spending: 22.1, gdpPct: 1.28, perCapita: 466, pop: 47.5, yoy: +17.6 },
+    { name: "Turkey", flag: "🇹🇷", spending: 23.4, gdpPct: 1.59, perCapita: 271, pop: 86.4, yoy: +28.6 },
+    { name: "Poland", flag: "🇵🇱", spending: 38.0, gdpPct: 4.12, perCapita: 1003, pop: 37.9, yoy: +20.3 },
+    { name: "Netherlands", flag: "🇳🇱", spending: 22.1, gdpPct: 1.85, perCapita: 1256, pop: 17.7, yoy: +13.9 },
+    { name: "Greece", flag: "🇬🇷", spending: 10.9, gdpPct: 3.08, perCapita: 1019, pop: 10.7, yoy: +22.5 },
+    { name: "Norway", flag: "🇳🇴", spending: 11.9, gdpPct: 1.86, perCapita: 2204, pop: 5.4, yoy: +17.8 },
+    { name: "Belgium", flag: "🇧🇪", spending: 7.5, gdpPct: 1.30, perCapita: 647, pop: 11.6, yoy: +15.4 },
+    { name: "Denmark", flag: "🇩🇰", spending: 10.1, gdpPct: 2.37, perCapita: 1724, pop: 5.86, yoy: +23.2 },
+    { name: "Romania", flag: "🇷🇴", spending: 9.4, gdpPct: 2.09, perCapita: 490, pop: 19.2, yoy: +10.6 },
+    { name: "Portugal", flag: "🇵🇹", spending: 5.2, gdpPct: 1.55, perCapita: 505, pop: 10.3, yoy: +10.6 },
+    { name: "Czechia", flag: "🇨🇿", spending: 5.0, gdpPct: 1.75, perCapita: 467, pop: 10.7, yoy: +25.0 },
+    { name: "Hungary", flag: "🇭🇺", spending: 4.4, gdpPct: 2.15, perCapita: 449, pop: 9.8, yoy: +18.9 },
+    { name: "Slovakia", flag: "🇸🇰", spending: 2.6, gdpPct: 2.20, perCapita: 476, pop: 5.46, yoy: +18.2 },
+    { name: "Bulgaria", flag: "🇧🇬", spending: 3.1, gdpPct: 2.16, perCapita: 437, pop: 7.1, yoy: +40.9 },
+    { name: "Croatia", flag: "🇭🇷", spending: 2.3, gdpPct: 2.93, perCapita: 561, pop: 4.1, yoy: +64.3 },
+    { name: "Albania", flag: "🇦🇱", spending: 0.5, gdpPct: 2.40, perCapita: 178, pop: 2.81, yoy: +25.0 },
+    { name: "Lithuania", flag: "🇱🇹", spending: 2.4, gdpPct: 2.86, perCapita: 857, pop: 2.80, yoy: +26.3 },
+    { name: "Latvia", flag: "🇱🇻", spending: 1.4, gdpPct: 3.15, perCapita: 737, pop: 1.9, yoy: +27.3 },
+    { name: "Estonia", flag: "🇪🇪", spending: 1.4, gdpPct: 3.43, perCapita: 1077, pop: 1.3, yoy: +27.3 },
+    { name: "Luxembourg", flag: "🇱🇺", spending: 0.8, gdpPct: 0.86, perCapita: 1231, pop: 0.65, yoy: +33.3 },
+    { name: "Montenegro", flag: "🇲🇪", spending: 0.2, gdpPct: 2.05, perCapita: 323, pop: 0.62, yoy: +100 },
+    { name: "North Macedonia", flag: "🇲🇰", spending: 0.3, gdpPct: 2.13, perCapita: 171, pop: 1.75, yoy: +50.0 },
+    { name: "Iceland", flag: "🇮🇸", spending: 0.1, gdpPct: 0.30, perCapita: 270, pop: 0.37, yoy: 0 },
+    { name: "Finland", flag: "🇫🇮", spending: 7.6, gdpPct: 2.41, perCapita: 1372, pop: 5.54, yoy: +8.6 },
+    { name: "Sweden", flag: "🇸🇪", spending: 11.3, gdpPct: 2.14, perCapita: 1066, pop: 10.6, yoy: +10.8 },
+  ]
+};
+
+const COLORS = [
+  '#00e5ff','#00ff9d','#ff6b35','#ffc107','#a78bfa',
+  '#f472b6','#34d399','#fb923c','#60a5fa','#f87171'
+];
+
+let currentYear = 2024;
+let sortBy = 'spending';
+let sortDir = -1;
+let searchQuery = '';
+let donutAnim = null;
+
+// Year setup
+const years = Object.keys(NATO_DATA).map(Number).sort();
+const ys = document.getElementById('yearSelector');
+years.forEach(y => {
+  const btn = document.createElement('button');
+  btn.className = 'year-btn' + (y === currentYear ? ' active' : '');
+  btn.textContent = y;
+  btn.onclick = () => { currentYear = y; document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); render(); };
+  ys.appendChild(btn);
+});
+
+function setSort(field) {
+  if (sortBy === field) sortDir *= -1;
+  else { sortBy = field; sortDir = field === 'name' ? 1 : -1; }
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(field.slice(0,4).toLowerCase())));
+  // re-match
+  if (field === 'spending') document.querySelectorAll('.sort-btn')[0].classList.add('active');
+  else if (field === 'gdp') document.querySelectorAll('.sort-btn')[1].classList.add('active');
+  else document.querySelectorAll('.sort-btn')[2].classList.add('active');
+  renderTable();
+}
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQuery = e.target.value.toLowerCase();
+  renderTable();
+});
+
+function getColor(gdpPct) {
+  if (gdpPct >= 2.0) return 'gdp-meet';
+  if (gdpPct >= 1.5) return 'gdp-close';
+  return 'gdp-low';
+}
+
+function fmtB(val) {
+  if (val >= 100) return '$' + val.toFixed(0) + 'B';
+  if (val >= 10) return '$' + val.toFixed(1) + 'B';
+  return '$' + val.toFixed(2) + 'B';
+}
+
+function fmtTotal(val) {
+  if (val >= 1000) return '$' + (val/1000).toFixed(2) + 'T';
+  return '$' + val.toFixed(0) + 'B';
+}
+
+function render() {
+  renderStats();
+  renderTable();
+  renderDonut();
+  renderCompliance();
+}
+
+function renderStats() {
+  const data = NATO_DATA[currentYear];
+  const total = data.reduce((s, d) => s + d.spending, 0);
+  const us = data.find(d => d.name === 'United States');
+  const above2 = data.filter(d => d.gdpPct >= 2.0).length;
+  const avgGdp = data.reduce((s, d) => s + d.gdpPct, 0) / data.length;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Total NATO Expenditure</div>
+      <div class="stat-value">${fmtTotal(total)}</div>
+      <div class="stat-sub">${data.length} Allied Nations</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">GDP Target Compliance</div>
+      <div class="stat-value">${above2}/${data.length}</div>
+      <div class="stat-sub">Nations meeting 2% benchmark</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">US Share of Total</div>
+      <div class="stat-value">${((us.spending/total)*100).toFixed(1)}%</div>
+      <div class="stat-sub">${fmtB(us.spending)} USD billions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Average % of GDP</div>
+      <div class="stat-value">${avgGdp.toFixed(2)}%</div>
+      <div class="stat-sub">Alliance-wide defense burden</div>
+    </div>
+  `;
+}
+
+function renderTable() {
+  const data = [...NATO_DATA[currentYear]];
+  const total = data.reduce((s, d) => s + d.spending, 0);
+  const max = Math.max(...data.map(d => d.spending));
+
+  // sort
+  data.sort((a, b) => {
+    if (sortBy === 'spending') return (a.spending - b.spending) * sortDir;
+    if (sortBy === 'gdp') return (a.gdpPct - b.gdpPct) * sortDir;
+    if (sortBy === 'name') return a.name.localeCompare(b.name) * sortDir;
+    return 0;
+  });
+
+  // filter
+  const filtered = data.filter(d => d.name.toLowerCase().includes(searchQuery));
+  const tbody = document.getElementById('tableBody');
+  const noRes = document.getElementById('noResults');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    noRes.style.display = 'block';
+    return;
+  }
+  noRes.style.display = 'none';
+
+  // rank by spending descending
+  const ranks = {};
+  [...data].sort((a,b) => b.spending - a.spending).forEach((d,i) => ranks[d.name] = i+1);
+
+  tbody.innerHTML = filtered.map((d, i) => {
+    const pct = (d.spending / total * 100);
+    const barW = (d.spending / max * 100);
+    const color = d.gdpPct >= 2 ? '#00ff9d' : d.gdpPct >= 1.5 ? '#ffc107' : '#ff6b35';
+    const yoyStr = d.yoy > 0 ? `+${d.yoy.toFixed(1)}%` : d.yoy < 0 ? `${d.yoy.toFixed(1)}%` : '—';
+    const yoyColor = d.yoy > 0 ? 'var(--green)' : d.yoy < 0 ? 'var(--accent2)' : 'var(--muted)';
+    return `<tr style="animation-delay:${i * 0.03}s" 
+      onmouseenter="showTip(event,'${d.name}','${fmtB(d.spending)}','${d.gdpPct.toFixed(2)}%','$${d.perCapita}','${pct.toFixed(2)}%','${yoyStr}','${yoyColor}')"
+      onmouseleave="hideTip()">
+      <td class="rank-cell">${ranks[d.name]}</td>
+      <td><div class="country-cell"><span class="flag">${d.flag}</span><span class="country-name">${d.name}</span></div></td>
+      <td class="bar-cell">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${color}"></div></div>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:${color};white-space:nowrap">${fmtB(d.spending)}</span>
+        </div>
+      </td>
+      <td class="val-cell">${pct.toFixed(2)}%</td>
+      <td class="pct-cell" style="color:${color}">${d.gdpPct.toFixed(2)}%</td>
+      <td class="gdp-cell"><span class="gdp-badge ${getColor(d.gdpPct)}">${d.gdpPct >= 2 ? '✓ MET' : d.gdpPct >= 1.5 ? '≈ NEAR' : '✗ LOW'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderDonut() {
+  const data = [...NATO_DATA[currentYear]].sort((a,b) => b.spending - a.spending);
+  const total = data.reduce((s, d) => s + d.spending, 0);
+  const top = data.slice(0, 8);
+  const otherSpend = data.slice(8).reduce((s,d) => s + d.spending, 0);
+  const items = [...top, { name: 'Others', spending: otherSpend }];
+
+  const canvas = document.getElementById('donutCanvas');
+  const ctx = canvas.getContext('2d');
+  const cx = 100, cy = 100, r = 85, inner = 58;
+  ctx.clearRect(0, 0, 200, 200);
+
+  let angle = -Math.PI / 2;
+  items.forEach((item, i) => {
+    const slice = (item.spending / total) * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, angle, angle + slice);
+    ctx.closePath();
+    ctx.fillStyle = i < COLORS.length ? COLORS[i] : '#334155';
+    ctx.fill();
+    angle += slice;
+  });
+
+  // inner ring erase
+  ctx.beginPath();
+  ctx.arc(cx, cy, inner, 0, 2 * Math.PI);
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--card').trim() || '#0f1929';
+  ctx.fill();
+
+  // border rings
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2*Math.PI);
+  ctx.strokeStyle = '#05080f';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, inner, 0, 2*Math.PI);
+  ctx.stroke();
+
+  document.getElementById('donutCenter').textContent = fmtTotal(total);
+
+  // legend
+  document.getElementById('donutLegend').innerHTML = top.map((d,i) => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${COLORS[i]}"></div>
+      <div class="legend-name">${d.flag} ${d.name}</div>
+      <div class="legend-pct">${((d.spending/total)*100).toFixed(1)}%</div>
+    </div>
+  `).join('') + `<div class="legend-item">
+    <div class="legend-dot" style="background:#334155"></div>
+    <div class="legend-name">All Others</div>
+    <div class="legend-pct">${((otherSpend/total)*100).toFixed(1)}%</div>
+  </div>`;
+}
+
+function renderCompliance() {
+  const data = NATO_DATA[currentYear];
+  const meet = data.filter(d => d.gdpPct >= 2.0).length;
+  const near = data.filter(d => d.gdpPct >= 1.5 && d.gdpPct < 2.0).length;
+  const low = data.filter(d => d.gdpPct < 1.5).length;
+  document.getElementById('complianceGrid').innerHTML = `
+    <div class="compliance-stat"><div class="compliance-num">${meet}</div><div class="compliance-lbl">≥2% MET</div></div>
+    <div class="compliance-stat"><div class="compliance-num">${near}</div><div class="compliance-lbl">1.5–2% NEAR</div></div>
+    <div class="compliance-stat"><div class="compliance-num">${low}</div><div class="compliance-lbl"><1.5% LOW</div></div>
+  `;
+}
+
+// Tooltip
+const tooltip = document.getElementById('tooltip');
+function showTip(e, name, spend, gdp, cap, share, yoy, yoyColor) {
+  document.getElementById('ttCountry').textContent = name;
+  document.getElementById('ttSpend').textContent = spend;
+  document.getElementById('ttGdp').textContent = gdp;
+  document.getElementById('ttCap').textContent = cap;
+  document.getElementById('ttShare').textContent = share;
+  document.getElementById('ttYoy').textContent = yoy;
+  document.getElementById('ttYoy').style.color = yoyColor;
+  tooltip.classList.add('visible');
+  moveTip(e);
+}
+function hideTip() { tooltip.classList.remove('visible'); }
+function moveTip(e) {
+  const x = e.clientX + 16;
+  const y = e.clientY - 10;
+  const rect = tooltip.getBoundingClientRect();
+  tooltip.style.left = (x + 240 > window.innerWidth ? x - 260 : x) + 'px';
+  tooltip.style.top = (y + 200 > window.innerHeight ? y - 200 : y) + 'px';
+}
+document.addEventListener('mousemove', e => { if (tooltip.classList.contains('visible')) moveTip(e); });
+
+render();
+</script>
+</body>
+</html>
